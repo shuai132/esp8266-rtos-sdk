@@ -2,19 +2,38 @@
 
 #include "esp_common.h"
 #include "gpio.h"
+#include "uart.h"
 
-static void task_blink(void* ignore)
+#define LOG_FOR_MCU
+#include "../modules/LOG/log.h"
+
+static void init_uart() {
+    UART_WaitTxFifoEmpty(UART0);
+    UART_ConfigTypeDef uartConfig;
+    uartConfig.baud_rate = BIT_RATE_115200;
+    uartConfig.data_bits = UART_WordLength_8b;
+    uartConfig.parity    = USART_Parity_None;
+    uartConfig.stop_bits = USART_StopBits_1;
+    uartConfig.flow_ctrl = USART_HardwareFlowControl_None;
+    uartConfig.UART_InverseMask = UART_None_Inverse;
+    UART_ParamConfig(UART0, &uartConfig);
+}
+
+[[noreturn]] static void task_blink(void* ignore)
 {
-    while(true) {
-        GPIO_OUTPUT_SET(2, 0);
-        vTaskDelay(100 / portTICK_RATE_MS);
-        GPIO_OUTPUT_SET(2, 1);
-        vTaskDelay(100 / portTICK_RATE_MS);
+    for(;;) {
+        static bool value;
+        value = !value;
+        LOGD("LED: %d", value);
+        GPIO_OUTPUT_SET(2, value);
+        vTaskDelay(1000 / portTICK_RATE_MS);
     }
 
     vTaskDelete(nullptr);
 }
 
 void init_app() {
+    init_uart();
+
     xTaskCreate(&task_blink, (const signed char*)"startup", 2048, NULL, 1, NULL);
 }
