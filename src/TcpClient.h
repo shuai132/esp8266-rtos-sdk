@@ -4,16 +4,15 @@
 #include "MakeEvent.hpp"
 
 class TcpClient {
+public:
     using byte = unsigned char;
 
 public:
-    TcpClient(const String& ssid
+    void connectTo(const String& ssid
             , const String& password
             , const String& serverIp
             , uint16_t serverPort
             );
-
-    String welcomeMsg;
 
     void sendMsg(const String& msg) const;
 

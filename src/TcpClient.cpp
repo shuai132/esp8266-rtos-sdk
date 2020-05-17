@@ -4,9 +4,11 @@ extern "C" {
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "TcpClient.h"
+
+//#define LOG_SHOW_VERBOSE
 #include "log.h"
 
-TcpClient::TcpClient(const String& ssid
+void TcpClient::connectTo(const String& ssid
         , const String& password
         , const String& serverIp
         , uint16_t serverPort
@@ -35,9 +37,8 @@ TcpClient::TcpClient(const String& ssid
         }
         break;
     }
-    onConnect();
     LOGD("connect ok");
-    sendMsg(welcomeMsg);
+    onConnect();
 
     byte buf[128];
     ssize_t sz;
@@ -59,5 +60,15 @@ void TcpClient::sendMsg(const String& msg) const {
 }
 
 void TcpClient::sendMsg(const void* data, size_t size) const {
-    write(_fd, data, size);
+    size_t sendSize = 0;
+    while (size > 0) {
+        sendSize = write(_fd, (byte*)data + sendSize, size);
+        if (sendSize < 0) {
+            LOGE("send error");
+        }
+        else {
+            size -= sendSize;
+            LOGV("sendSize:%u", sendSize);
+        }
+    }
 }

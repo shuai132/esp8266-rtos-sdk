@@ -37,18 +37,26 @@ static void init_uart() {
     for(;;) {
         LOGD("tcp_task...");
 
-        ConnAp connAp([]{
-            TcpClient client(DEMO_AP_SSID
-                    , DEMO_AP_PASSWORD
-                    , TCP_SERVER_IPADDR
-                    , TCP_SERVER_REMOTE_PORT
+        static ConnAp connAp([]{
+            static TcpClient client;
+            client.connectTo(AP_SSID
+                    , AP_PASSWORD
+                    , TCP_SERVER_ADDR
+                    , TCP_SERVER_PORT
             );
 
             client.setConnectCb([] {
                 LOGD("client connected cb!");
+                client.sendMsg("hello!!!");
+            });
+
+            client.setReceiveCb([](TcpClient::byte* data, ssize_t size) {
+                LOGD("client receive cb: %d, %s", size, String((char*)data, size).c_str());
+                // echo
+                client.sendMsg(data, size);
             });
         });
-        connAp.connect(DEMO_AP_SSID, DEMO_AP_PASSWORD);
+        connAp.connect(AP_SSID, AP_PASSWORD);
     }
 }
 
