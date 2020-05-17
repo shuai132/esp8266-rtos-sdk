@@ -1,6 +1,0 @@
-
-# 使用platformio 这里的配置并不会生效 只作为IDE提示
-include_directories(modules/LOG)
-add_definitions(-DLOG_FOR_MCU)
-
-include_directories(modules/MAKE_EVENT)

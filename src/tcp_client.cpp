@@ -1,4 +1,6 @@
+extern "C" {
 #include "lwip/sockets.h"
+}
 #include "user_config.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"

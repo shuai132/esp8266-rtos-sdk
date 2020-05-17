@@ -69,8 +69,8 @@ void conn_ap_start(void)
     wifi_set_opmode(STATION_MODE);
 
     memset(&config, 0, sizeof(config));
-    sprintf(config.ssid, DEMO_AP_SSID);
-    sprintf(config.password, DEMO_AP_PASSWORD);
+    sprintf((char*)config.ssid, DEMO_AP_SSID);
+    sprintf((char*)config.password, DEMO_AP_PASSWORD);
     wifi_station_set_config(&config);
 
     wifi_set_event_handler_cb(wifi_handle_event_cb);
