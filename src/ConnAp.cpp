@@ -1,13 +1,16 @@
 #include "esp_common.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "conn_ap.h"
-#include "user_config.h"
+#include "ConnAp.h"
 #include "log.h"
+
+static ConnAp* instance = nullptr;
 
 static void wifi_handle_event_cb(System_Event_t *evt)
 {
     LOG("wifi event: %x", evt->event_id);
+    if (instance)
+        instance->onWifiEvent(evt);
 
     switch (evt->event_id) {
     case EVENT_STAMODE_CONNECTED:
@@ -30,7 +33,6 @@ static void wifi_handle_event_cb(System_Event_t *evt)
                IP2STR(&evt->event_info.got_ip.ip),
                IP2STR(&evt->event_info.got_ip.mask),
                IP2STR(&evt->event_info.got_ip.gw));
-        LOG("");
         break;
     case EVENT_SOFTAPMODE_STACONNECTED:
         LOG("station: " MACSTR "join, AID = %d",
@@ -47,34 +49,42 @@ static void wifi_handle_event_cb(System_Event_t *evt)
     }
 }
 
-static void wifi_connect_wait(void)
+static void wifi_connect_wait()
 {
     uint8 con_status = wifi_station_get_connect_status();
     while(con_status != STATION_GOT_IP) {
         con_status = wifi_station_get_connect_status();
-        LOGD("Connect ap %s", con_status == STATION_IDLE ? "IDLE" : con_status == STATION_CONNECTING ? \
-               "Connecting..." : con_status == STATION_WRONG_PASSWORD ? \
-               "Password" : con_status == STATION_NO_AP_FOUND ? \
-               "ap_not_find" : con_status == STATION_CONNECT_FAIL ? "Connect fail" : "Get ip");
+        LOGD("Connect ap: %s", con_status == STATION_IDLE ? "IDLE" : con_status == STATION_CONNECTING ? \
+               "connecting" : con_status == STATION_WRONG_PASSWORD ? \
+               "wrong password" : con_status == STATION_NO_AP_FOUND ? \
+               "no ap found" : con_status == STATION_CONNECT_FAIL ? "fail" : "got ip");
         vTaskDelay(1000 / portTICK_RATE_MS);
     }
 
     LOG("wifi connected");
 }
 
-void conn_ap_start(void)
-{
-    struct station_config config;
-
+void ConnAp::connect(const String& ssid, const String& password) {
     wifi_set_opmode(STATION_MODE);
 
-    memset(&config, 0, sizeof(config));
-    sprintf((char*)config.ssid, DEMO_AP_SSID);
-    sprintf((char*)config.password, DEMO_AP_PASSWORD);
+    station_config config{};
+    strcpy((char*)config.ssid, ssid.c_str());
+    strcpy((char*)config.password, password.c_str());
     wifi_station_set_config(&config);
 
     wifi_set_event_handler_cb(wifi_handle_event_cb);
     wifi_station_connect();
 
     wifi_connect_wait();
+
+    onConnected();
+}
+
+ConnAp::ConnAp(ConnectedCb_t cb) {
+    instance = this;
+    setConnectedCb(cb);
+}
+
+ConnAp::~ConnAp() {
+    instance = nullptr;
 }

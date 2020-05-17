@@ -5,8 +5,9 @@
 #include "uart.h"
 
 #include "log.h"
-#include "conn_ap.h"
-#include "tcp_client.h"
+#include "ConnAp.h"
+#include "TcpClient.h"
+#include "user_config.h"
 
 static void init_uart() {
     UART_WaitTxFifoEmpty(UART0);
@@ -32,11 +33,22 @@ static void init_uart() {
     vTaskDelete(nullptr);
 }
 
-[[noreturn]] static void tcp_task(void* ignore) {
+[[noreturn]] static void task_tcp(void* ignore) {
     for(;;) {
         LOGD("tcp_task...");
-        conn_ap_start();
-        tcp_client_start();
+
+        ConnAp connAp([]{
+            TcpClient client(DEMO_AP_SSID
+                    , DEMO_AP_PASSWORD
+                    , TCP_SERVER_IPADDR
+                    , TCP_SERVER_REMOTE_PORT
+            );
+
+            client.setConnectCb([] {
+                LOGD("client connected cb!");
+            });
+        });
+        connAp.connect(DEMO_AP_SSID, DEMO_AP_PASSWORD);
     }
 }
 
@@ -46,7 +58,10 @@ void init_app() {
     LOG("SDK version:%s", system_get_sdk_version());
     LOG("ESP8266 chip ID:0x%x", system_get_chip_id());
 
-    xTaskCreate(&task_blink, (const signed char*)"startup", 2048, NULL, 1, NULL);
-    xTaskCreate(&tcp_task, (const signed char*)"startup", 2048, NULL, 1, NULL);
+    xTaskCreate(&task_blink, (const signed char*)"task_blink", 2048, NULL, 1, NULL);
+    xTaskCreate(&task_tcp, (const signed char*)"task_tcp", 2048, NULL, 2, NULL);
 }
 
+void std::__throw_length_error(const char* str) {
+    FATAL("throw_length_error: %s", str);
+}
