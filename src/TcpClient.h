@@ -2,10 +2,13 @@
 
 #include "String.h"
 #include "MakeEvent.hpp"
+#include "Singleton.hpp"
 
 class TcpClient {
 public:
     using byte = unsigned char;
+
+    SINGLETON(TcpClient);
 
 public:
     void connectTo(const String& ssid

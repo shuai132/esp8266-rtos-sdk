@@ -34,11 +34,11 @@ static void init_uart() {
 }
 
 [[noreturn]] static void task_tcp(void* ignore) {
+    static auto connAp = ConnAp::getInstance();
+    static auto client = TcpClient::getInstance();
     for(;;) {
         LOGD("tcp_task...");
-
-        static ConnAp connAp([]{
-            static TcpClient client;
+        connAp.setConnectedCb([]{
             client.connectTo(AP_SSID
                     , AP_PASSWORD
                     , TCP_SERVER_ADDR
@@ -51,7 +51,7 @@ static void init_uart() {
             });
 
             client.setReceiveCb([](TcpClient::byte* data, ssize_t size) {
-                LOGD("client receive cb: %d, %s", size, String((char*)data, size).c_str());
+                LOGD("client receive cb: %d, %s", size, String((char*)data, std::min(size, 5)).c_str());
                 // echo
                 client.sendMsg(data, size);
             });

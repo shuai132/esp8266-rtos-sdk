@@ -4,13 +4,10 @@
 #include "ConnAp.h"
 #include "log.h"
 
-static ConnAp* instance = nullptr;
-
 static void wifi_handle_event_cb(System_Event_t *evt)
 {
     LOG("wifi event: %x", evt->event_id);
-    if (instance)
-        instance->onWifiEvent(evt);
+    ConnAp::getInstance().onWifiEvent(evt);
 
     switch (evt->event_id) {
     case EVENT_STAMODE_CONNECTED:
@@ -78,13 +75,4 @@ void ConnAp::connect(const String& ssid, const String& password) {
     wifi_connect_wait();
 
     onConnected();
-}
-
-ConnAp::ConnAp(ConnectedCb_t cb) {
-    instance = this;
-    setConnectedCb(cb);
-}
-
-ConnAp::~ConnAp() {
-    instance = nullptr;
 }

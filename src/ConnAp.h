@@ -2,14 +2,15 @@
 
 #include "String.h"
 #include "MakeEvent.hpp"
+#include "Singleton.hpp"
 
 class ConnAp {
 public:
     MAKE_EVENT(WifiEvent, System_Event_t*);
     MAKE_EVENT(Connected);
 
+    SINGLETON(ConnAp);
+
 public:
-    explicit ConnAp(ConnectedCb_t cb = nullptr);
-    ~ConnAp();
     void connect(const String& ssid, const String& password);
 };
